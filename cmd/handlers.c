@@ -6,6 +6,7 @@
 #include "sntp.h"
 #include "cmd.h"
 #include <cgiwifi.h>
+#include <config.h>
 #ifdef MQTT
 #include <mqtt_cmd.h>
 #endif
@@ -24,6 +25,7 @@ static void cmdSync(CmdPacket *cmd);
 static void cmdWifiStatus(CmdPacket *cmd);
 static void cmdGetTime(CmdPacket *cmd);
 static void cmdAddCallback(CmdPacket *cmd);
+static void cmdHostname(CmdPacket *cmd);
 
 // keep track of last status sent to uC so we can notify it when it changes
 static uint8_t lastWifiStatus = wifiIsDisconnected;
@@ -36,6 +38,7 @@ const CmdList commands[] = {
   {CMD_WIFI_STATUS,     "WIFI_STATUS",    cmdWifiStatus},
   {CMD_CB_ADD,          "ADD_CB",         cmdAddCallback},
   {CMD_GET_TIME,        "GET_TIME",       cmdGetTime},
+  {CMD_HOSTNAME,        "HOSTNAME",       cmdHostname},
 #ifdef MQTT
   {CMD_MQTT_SETUP,      "MQTT_SETUP",     MQTTCMD_Setup},
   {CMD_MQTT_PUBLISH,    "MQTT_PUB",       MQTTCMD_Publish},
@@ -178,4 +181,13 @@ cmdAddCallback(CmdPacket *cmd) {
   DBG("cmdAddCallback: name=%s\n", name);
 
   cmdAddCb(name, cmd->value); // save the sensor callback
+}
+
+// Command handler for hostname command
+static void ICACHE_FLASH_ATTR
+cmdHostname(CmdPacket *cmd) {
+  cmdResponseStart(CMD_RESP_V, 0, 0);
+  cmdResponseBody((uint8_t*)&flashConfig.hostname, sizeof(&flashConfig.hostname));
+  cmdResponseEnd();
+  return;
 }
